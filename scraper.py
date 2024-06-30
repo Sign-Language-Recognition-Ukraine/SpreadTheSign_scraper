@@ -16,12 +16,17 @@
 #  along with SpreadTheSign_scraper. If not, see <https://www.gnu.org/licenses/>.
 
 SCRAPE_LINKS = False
-DOWNLOAD_LINKS = True 
+DOWNLOAD_LINKS = False 
 
 # from distutils.dir_util import copy_tree
 # source_dir = "/kaggle/input/spreadthesign-ukrainian-sign-language-videos"
 # destination_dir = "/kaggle/working/"
 # copy_tree(source_dir, destination_dir)
+
+# import pandas as pd
+# df = pd.read_csv('downloads.csv', header=None)
+# df.rename(columns={0: 'word', 1: 'src_link', 2:'subindex', 3:'local_path'}, inplace=True)
+# df.to_csv('downloads.csv', index=False) 
 
 import csv
 import requests
@@ -57,7 +62,7 @@ def scrape_website(urlBase, urlExt, currentIndex, writer, recursive, subIndex):
     writer.writerow([text,src,subIndex])
     
 if SCRAPE_LINKS:
-    with open('videos.csv', 'w', newline='', encoding='utf-8') as file:
+    with open('links.csv', 'w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         for i in range(3196,4958): 
             print(f"{i} ")
@@ -70,19 +75,19 @@ import re
 if DOWNLOAD_LINKS:
     if not os.path.exists('videos'):
         os.makedirs('videos')
-    with open('videos.csv', 'r', newline='', encoding='utf-8') as file:
+    with open('links.csv', 'r', newline='', encoding='utf-8') as file:
         reader = csv.reader(file)
         with open('downloads.csv', 'w', newline='', encoding='utf-8') as downloads_file:
             writer = csv.writer(downloads_file)
-            
+            writer.writerow(['word', 'src_link', 'subindex', 'local_path'])
             index = 0
             for row in reader:
                 time.sleep(0.3)
                 index += 1
                 text, src, subIndex = row
                 if src!= "UNAVAILABLE" and text!= "UNAVAILABLE":
-                    unsafe_chars = r'[*/\"<>|@`\']'
-                    filename = f"videos/{index}__{re.sub(unsafe_chars, '_', text)}"
+                    unsafe_chars = r'[*\\?/\"<>|@`:\']'
+                    filename = f"videos/{index}__{re.sub(unsafe_chars, '_', text)}.mp4"
                     try:
                         urllib.request.urlretrieve(src, filename)
                         print(f"Downloaded {filename}")
