@@ -3,6 +3,7 @@
 ## Introduction
 
 This project, `SpreadTheSign_scraper`, is designed to scrape video content related to Sign Language from the [SpreadTheSign](https://spreadthesign.com/) website. The scraped data is intended for use in training artificial intelligence models, specifically those focused on sign language recognition and interpretation. The project is licensed under the GNUv3, allowing for redistribution and modification under certain conditions.
+The USL dataset produced by this scraper is available on [Kaggle](https://www.kaggle.com/datasets/paracetamolenjoyer/spreadthesign-ukrainian-sign-language-videos).
 
 ## Overview
 
