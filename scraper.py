@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SpreadTheSign_scraper. If not, see <https://www.gnu.org/licenses/>.
 
-SCRAPE_LINKS = False
+SCRAPE_LINKS = True
 DOWNLOAD_LINKS = False 
 
 # from distutils.dir_util import copy_tree
@@ -34,9 +34,24 @@ from bs4 import BeautifulSoup
 import time
 HEADERS = {'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'}
 
-def scrape_website(urlBase, urlExt, currentIndex, writer, recursive, subIndex):
-    time.sleep(0.3)
-    response = requests.get(urlBase+urlExt+currentIndex, headers=HEADERS)
+def scrape_website(urlBase, urlExt, currentIndex, writer, recursive, subIndex): 
+    time.sleep(0.1)
+    while(True):
+        try:
+            response = requests.get(urlBase + urlExt + currentIndex, headers=HEADERS) 
+            break 
+        except requests.exceptions.RequestException as e:
+            if isinstance(e, requests.exceptions.ConnectionError):
+                print("Connection error occurred.")
+                user_input = input("Do you want to retry or skip this attempt? (r/skip): ").lower()
+                if user_input == 'skip':
+                    print("Stopping the operation.")
+                    return
+            elif isinstance(e, requests.exceptions.TooManyRedirects):
+                print("EXCEEDED MAX REDIRECTS. Ignoring this error.")
+                return 
+
+        
     soup = BeautifulSoup(response.text, 'html.parser')
     try:
         src = soup.find('video')['src']
@@ -62,9 +77,9 @@ def scrape_website(urlBase, urlExt, currentIndex, writer, recursive, subIndex):
     writer.writerow([text,src,subIndex])
     
 if SCRAPE_LINKS:
-    with open('links.csv', 'w', newline='', encoding='utf-8') as file:
+    with open('links.csv', 'a', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        for i in range(3196,4958): 
+        for i in range(20476,50000): 
             print(f"{i} ")
             scrape_website('https://www.spreadthesign.com','/uk.ua/word/', str(i), writer, True, 0)
         
@@ -82,10 +97,10 @@ if DOWNLOAD_LINKS:
             writer.writerow(['word', 'src_link', 'subindex', 'local_path'])
             index = 0
             for row in reader:
-                time.sleep(0.3)
                 index += 1
                 text, src, subIndex = row
                 if src!= "UNAVAILABLE" and text!= "UNAVAILABLE":
+                    time.sleep(0.3)
                     unsafe_chars = r'[*\\?/\"<>|@`:\']'
                     filename = f"videos/{index}__{re.sub(unsafe_chars, '_', text)}.mp4"
                     try:
