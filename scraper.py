@@ -79,7 +79,7 @@ def scrape_website(urlBase, urlExt, currentIndex, writer, recursive, subIndex):
 if SCRAPE_LINKS:
     with open('links.csv', 'a', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        for i in range(20476,50000): 
+        for i in range(20476,50000): # min 1, max 50000
             print(f"{i} ")
             scrape_website('https://www.spreadthesign.com','/uk.ua/word/', str(i), writer, True, 0)
         
@@ -110,7 +110,7 @@ if DOWNLOAD_LINKS:
                         writer.writerow([text, src, subIndex, filename])
                         
                     except Exception as e:
-                        print(f"Failed to download {filename}: {e}")
+                        print(f"FAILED TO DOWNLOAD {filename}: {e}")
                         writer.writerow([text, src, subIndex, "COULD NOT DOWNLOAD"])
                 else:
                     writer.writerow([text, src, subIndex, "UNAVAILABLE"])
