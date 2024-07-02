@@ -75,13 +75,27 @@ def scrape_website(urlBase, urlExt, currentIndex, writer, recursive, subIndex):
     text = soup.find('h2').text.strip() if soup.find('h2') else "UNAVAILABLE"
 
     writer.writerow([text,src,subIndex])
-    
+
+languages = {
+            'ar_sy':'/ar.sy/', 'bg_bg':'/bg.bg/', 'zh_hans_cn':'/zh.hans.cn/', 'hr_hr':'/hr.hr/', 
+            'cs_cz':'/cs.cz/', 'da_dk':'/da.dk/', 'en_au':'/en.au/', 'en_in':'/en.in/',
+            'en_nz':'/en.nz/', 'en_gb':'/en.gb/', 'en_us':'/en.us/', 'et_ee':'/et.ee/',
+            'fi_fi':'/fi.fi/', 'fr_fr':'/fr.fr/', 'de_at':'/de.at/', 'de_de':'/de.de/', 
+            'el_cy':'/el.cy/', 'el_gr':'/el.gr/', 'hi_in':'/hi.in/', 'is_is':'/is.is/', 
+            'isl_intl':'/isl.intl/', 'it_it':'/it.it/', 'ja_jp':'/ja.jp/', 'lv_lv':'/lv.lv/', 
+            'lt_lt':'/lt.lt/', 'fa_ir':'/fa.ir/', 'pl_pl':'/pl.pl/', 'pt_br':'/pt.br/',
+            'pt_pt':'/pt.pt/', 'ro_ro':'/ro.ro/', 'sk_sk':'/sk.sk/', 'es_ar':'/es.ar/', 
+            'es_cl':'/es.cl/', 'es_cu':'/es.cu/', 'es_mx':'/es.mx/', 'es_es':'/es.es/',  
+            'sv_se':'/sv.se/', 'tr_tr':'/tr.tr/', 'uk_ua':'/uk.ua/', 'ur_pk':'/ur.pk/', 
+            }
+language = 'uk_ua'
+language_path = languages[language]
 if SCRAPE_LINKS:
-    with open('links.csv', 'a', newline='', encoding='utf-8') as file:
+    with open('links.csv', 'w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        for i in range(20476,50000): 
+        for i in range(50000,100000): # min 1, max 50000
             print(f"{i} ")
-            scrape_website('https://www.spreadthesign.com','/uk.ua/word/', str(i), writer, True, 0)
+            scrape_website('https://www.spreadthesign.com',f'{language_path}word/', str(i), writer, True, 0)
         
 import urllib.request
 import os
@@ -110,7 +124,7 @@ if DOWNLOAD_LINKS:
                         writer.writerow([text, src, subIndex, filename])
                         
                     except Exception as e:
-                        print(f"Failed to download {filename}: {e}")
+                        print(f"FAILED TO DOWNLOAD {filename}: {e}")
                         writer.writerow([text, src, subIndex, "COULD NOT DOWNLOAD"])
                 else:
                     writer.writerow([text, src, subIndex, "UNAVAILABLE"])
