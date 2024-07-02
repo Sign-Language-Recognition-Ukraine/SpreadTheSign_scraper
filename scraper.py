@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SpreadTheSign_scraper. If not, see <https://www.gnu.org/licenses/>.
 
-SCRAPE_LINKS = True
+SCRAPE_LINKS = False
 DOWNLOAD_LINKS = False 
 
 # from distutils.dir_util import copy_tree
@@ -27,6 +27,11 @@ DOWNLOAD_LINKS = False
 # df = pd.read_csv('downloads.csv', header=None)
 # df.rename(columns={0: 'word', 1: 'src_link', 2:'subindex', 3:'local_path'}, inplace=True)
 # df.to_csv('downloads.csv', index=False) 
+
+with open('links.csv', 'r', encoding='utf-8') as f1, open('links_concatenate.csv', 'r', encoding='utf-8') as f2:
+    with open('links_total.csv', 'w', encoding='utf-8') as f_total:
+        f_total.write(f1.read())
+        f_total.write(f2.read())
 
 import csv
 import requests
