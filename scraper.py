@@ -17,6 +17,8 @@
 
 SCRAPE_LINKS = False
 DOWNLOAD_LINKS = False 
+REDOWNLOAD_LINKS = True 
+
 
 # from distutils.dir_util import copy_tree
 # source_dir = "/kaggle/input/spreadthesign-ukrainian-sign-language-videos"
@@ -28,10 +30,10 @@ DOWNLOAD_LINKS = False
 # df.rename(columns={0: 'word', 1: 'src_link', 2:'subindex', 3:'local_path'}, inplace=True)
 # df.to_csv('downloads.csv', index=False) 
 
-with open('links.csv', 'r', encoding='utf-8') as f1, open('links_concatenate.csv', 'r', encoding='utf-8') as f2:
-    with open('links_total.csv', 'w', encoding='utf-8') as f_total:
-        f_total.write(f1.read())
-        f_total.write(f2.read())
+# with open('links.csv', 'r', encoding='utf-8') as f1, open('links_concatenate.csv', 'r', encoding='utf-8') as f2:
+#     with open('links_total.csv', 'w', encoding='utf-8') as f_total:
+#         f_total.write(f1.read())
+#         f_total.write(f2.read())
 
 import csv
 import requests
@@ -98,7 +100,7 @@ language_path = languages[language]
 if SCRAPE_LINKS:
     with open('links.csv', 'w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        for i in range(50000,100000): # min 1, max 50000
+        for i in range(1,50000): # min 1, max 50000
             print(f"{i} ")
             scrape_website('https://www.spreadthesign.com',f'{language_path}word/', str(i), writer, True, 0)
         
@@ -106,30 +108,72 @@ import urllib.request
 import os
 import re
 
+skip = -1
 if DOWNLOAD_LINKS:
     if not os.path.exists('videos'):
         os.makedirs('videos')
     with open('links.csv', 'r', newline='', encoding='utf-8') as file:
         reader = csv.reader(file)
-        with open('downloads.csv', 'w', newline='', encoding='utf-8') as downloads_file:
+        with open('downloads.csv', 'a', newline='', encoding='utf-8') as downloads_file:
             writer = csv.writer(downloads_file)
             writer.writerow(['word', 'src_link', 'subindex', 'local_path'])
             index = 0
-            for row in reader:
-                index += 1
+            for row in reader: 
+                index += 1 
                 text, src, subIndex = row
+                if index <= skip:
+                    print(f"skipping {index}")
+                    continue
                 if src!= "UNAVAILABLE" and text!= "UNAVAILABLE":
-                    time.sleep(0.3)
+                    time.sleep(0.33)
                     unsafe_chars = r'[*\\?/\"<>|@`:\']'
                     filename = f"videos/{index}__{re.sub(unsafe_chars, '_', text)}.mp4"
                     try:
                         urllib.request.urlretrieve(src, filename)
-                        print(f"Downloaded {filename}")
+                        print(f"{index} Downloaded {filename}")
                         
                         writer.writerow([text, src, subIndex, filename])
                         
                     except Exception as e:
-                        print(f"FAILED TO DOWNLOAD {filename}: {e}")
+                        print(f"{index} FAILED TO DOWNLOAD {filename}: {e}")
                         writer.writerow([text, src, subIndex, "COULD NOT DOWNLOAD"])
                 else:
-                    writer.writerow([text, src, subIndex, "UNAVAILABLE"])
+                    if src != "UNAVAILABLE":
+                        print(f"{index} ANOMALY")
+                        writer.writerow([text, src, subIndex, "ANOMALY"])
+                    else: 
+                        print(f"{index} SKIPPING")
+
+if REDOWNLOAD_LINKS:
+    if not os.path.exists('videos'):
+        os.makedirs('videos')
+    with open('downloads.csv', 'r', newline='', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        with open('redownloads.csv', 'w', newline='', encoding='utf-8') as downloads_file:
+            writer = csv.writer(downloads_file)
+            writer.writerow(['word', 'src_link', 'subindex', 'local_path'])
+            index = 0
+            for row in reader: 
+                index += 1 
+                text, src, subIndex, local_path = row
+                if index <= skip:
+                    print(f"skipping {index}")
+                    continue
+                cnd = local_path == "COULD NOT DOWNLOAD"
+                missing = not os.path.exists(local_path) 
+                if cnd or missing:
+                    time.sleep(0.5)
+                    unsafe_chars = r'[*\\?/\"<>|@`:\']'
+                    filename = f"videos/redo{index}__{re.sub(unsafe_chars, '_', text)}.mp4"
+                    try:
+                        urllib.request.urlretrieve(src, filename)
+                        print(f"{index} Downloaded {filename}")
+                        print(f"CND {cnd} MISSING {missing}")
+                        writer.writerow([text, src, subIndex, filename])
+                        
+                    except Exception as e:
+                        print(f"{index} FAILED TO DOWNLOAD {filename}: {e}")
+                        writer.writerow([text, src, subIndex, "COULD NOT DOWNLOAD"])
+                else:
+                    writer.writerow([text, src, subIndex, local_path])
+                    print(f"skip {index}")
