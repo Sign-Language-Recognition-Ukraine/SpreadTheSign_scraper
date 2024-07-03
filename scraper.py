@@ -100,7 +100,7 @@ language_path = languages[language]
 if SCRAPE_LINKS:
     with open('links.csv', 'w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        for i in range(1,50000): # min 1, max 50000
+        for i in range(1,50000): # min 1, max 75000
             print(f"{i} ")
             scrape_website('https://www.spreadthesign.com',f'{language_path}word/', str(i), writer, True, 0)
         
@@ -162,7 +162,7 @@ if REDOWNLOAD_LINKS:
                 cnd = local_path == "COULD NOT DOWNLOAD"
                 missing = not os.path.exists(local_path) 
                 if cnd or missing:
-                    time.sleep(0.5)
+                    time.sleep(0.4)
                     unsafe_chars = r'[*\\?/\"<>|@`:\']'
                     filename = f"videos/redo{index}__{re.sub(unsafe_chars, '_', text)}.mp4"
                     try:
@@ -176,4 +176,3 @@ if REDOWNLOAD_LINKS:
                         writer.writerow([text, src, subIndex, "COULD NOT DOWNLOAD"])
                 else:
                     writer.writerow([text, src, subIndex, local_path])
-                    print(f"skip {index}")
