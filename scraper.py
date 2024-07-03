@@ -15,20 +15,15 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SpreadTheSign_scraper. If not, see <https://www.gnu.org/licenses/>.
 
-SCRAPE_LINKS = False
+SCRAPE_LINKS = True
 DOWNLOAD_LINKS = False 
-REDOWNLOAD_LINKS = True 
+REDOWNLOAD_LINKS = False 
 
 
 # from distutils.dir_util import copy_tree
 # source_dir = "/kaggle/input/spreadthesign-ukrainian-sign-language-videos"
 # destination_dir = "/kaggle/working/"
 # copy_tree(source_dir, destination_dir)
-
-# import pandas as pd
-# df = pd.read_csv('downloads.csv', header=None)
-# df.rename(columns={0: 'word', 1: 'src_link', 2:'subindex', 3:'local_path'}, inplace=True)
-# df.to_csv('downloads.csv', index=False) 
 
 # with open('links.csv', 'r', encoding='utf-8') as f1, open('links_concatenate.csv', 'r', encoding='utf-8') as f2:
 #     with open('links_total.csv', 'w', encoding='utf-8') as f_total:
@@ -41,7 +36,7 @@ from bs4 import BeautifulSoup
 import time
 HEADERS = {'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'}
 
-def scrape_website(urlBase, urlExt, currentIndex, writer, recursive, subIndex): 
+def scrape_website(urlBase, urlExt, currentIndex, writer, recursive, subIndex, csvIndex): 
     time.sleep(0.1)
     while(True):
         try:
@@ -71,7 +66,7 @@ def scrape_website(urlBase, urlExt, currentIndex, writer, recursive, subIndex):
             list = soup.find("div", attrs={"class":"col-md-7"}).find_all('a', attrs={"data-replace":"show-result", "class":"js-replace"})
             if len(list) != 0:
                 for item in list:
-                    scrape_website(urlBase, f"{item['href']}", "", writer, False, number)
+                    scrape_website(urlBase, f"{item['href']}", "", writer, False, number, csvIndex)
                     number += 1
                 return
             
@@ -81,7 +76,7 @@ def scrape_website(urlBase, urlExt, currentIndex, writer, recursive, subIndex):
 
     text = soup.find('h2').text.strip() if soup.find('h2') else "UNAVAILABLE"
 
-    writer.writerow([text,src,subIndex])
+    writer.writerow([csvIndex,text,src,subIndex])
 
 languages = {
             'ar_sy':'/ar.sy/', 'bg_bg':'/bg.bg/', 'zh_hans_cn':'/zh.hans.cn/', 'hr_hr':'/hr.hr/', 
@@ -98,12 +93,13 @@ languages = {
 language = 'uk_ua'
 language_path = languages[language]
 if SCRAPE_LINKS:
-    with open('links.csv', 'w', newline='', encoding='utf-8') as file:
+    with open('relinks.csv', 'w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        for i in range(1,50000): # min 1, max 75000
+        for i in range(1,75000): # min 1, max 75000
             print(f"{i} ")
-            scrape_website('https://www.spreadthesign.com',f'{language_path}word/', str(i), writer, True, 0)
+            scrape_website('https://www.spreadthesign.com',f'{language_path}word/', str(i), writer, True, 0, str(i))
         
+
 import urllib.request
 import os
 import re
@@ -126,7 +122,7 @@ if DOWNLOAD_LINKS:
                     continue
                 if src!= "UNAVAILABLE" and text!= "UNAVAILABLE":
                     time.sleep(0.33)
-                    unsafe_chars = r'[*\\?/\"<>|@`:\']'
+                    unsafe_chars = r'[*\\?/\"<>|@`:\';$%^&~`\[\]]'
                     filename = f"videos/{index}__{re.sub(unsafe_chars, '_', text)}.mp4"
                     try:
                         urllib.request.urlretrieve(src, filename)
@@ -163,7 +159,7 @@ if REDOWNLOAD_LINKS:
                 missing = not os.path.exists(local_path) 
                 if cnd or missing:
                     time.sleep(0.4)
-                    unsafe_chars = r'[*\\?/\"<>|@`:\']'
+                    unsafe_chars = r'[*\\?/\"<>|@`:\';$%^&~`\[\]]'
                     filename = f"videos/redo{index}__{re.sub(unsafe_chars, '_', text)}.mp4"
                     try:
                         urllib.request.urlretrieve(src, filename)
