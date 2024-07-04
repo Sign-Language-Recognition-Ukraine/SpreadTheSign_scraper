@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SpreadTheSign_scraper. If not, see <https://www.gnu.org/licenses/>.
 
-SCRAPE_LINKS = True
+SCRAPE_LINKS = False
 DOWNLOAD_LINKS = False 
 REDOWNLOAD_LINKS = False 
 
@@ -112,11 +112,11 @@ if DOWNLOAD_LINKS:
         reader = csv.reader(file)
         with open('downloads.csv', 'a', newline='', encoding='utf-8') as downloads_file:
             writer = csv.writer(downloads_file)
-            writer.writerow(['word', 'src_link', 'subindex', 'local_path'])
+            # writer.writerow(['index', 'word', 'src_link', 'subindex', 'local_path'])
             index = 0
             for row in reader: 
                 index += 1 
-                text, src, subIndex = row
+                id, text, src, subIndex = row
                 if index <= skip:
                     print(f"skipping {index}")
                     continue
@@ -128,18 +128,17 @@ if DOWNLOAD_LINKS:
                         urllib.request.urlretrieve(src, filename)
                         print(f"{index} Downloaded {filename}")
                         
-                        writer.writerow([text, src, subIndex, filename])
+                        writer.writerow([id, text, src, subIndex, filename])
                         
                     except Exception as e:
                         print(f"{index} FAILED TO DOWNLOAD {filename}: {e}")
-                        writer.writerow([text, src, subIndex, "COULD NOT DOWNLOAD"])
+                        writer.writerow([id, text, src, subIndex, "COULD NOT DOWNLOAD"])
                 else:
                     if src != "UNAVAILABLE":
                         print(f"{index} ANOMALY")
-                        writer.writerow([text, src, subIndex, "ANOMALY"])
+                        writer.writerow([id, text, src, subIndex, "ANOMALY"])
                     else: 
                         print(f"{index} SKIPPING")
-
 if REDOWNLOAD_LINKS:
     if not os.path.exists('videos'):
         os.makedirs('videos')
@@ -147,11 +146,11 @@ if REDOWNLOAD_LINKS:
         reader = csv.reader(file)
         with open('redownloads.csv', 'w', newline='', encoding='utf-8') as downloads_file:
             writer = csv.writer(downloads_file)
-            writer.writerow(['word', 'src_link', 'subindex', 'local_path'])
+            # writer.writerow(['index', 'word', 'src_link', 'subindex', 'local_path'])
             index = 0
             for row in reader: 
                 index += 1 
-                text, src, subIndex, local_path = row
+                id, text, src, subIndex, local_path = row
                 if index <= skip:
                     print(f"skipping {index}")
                     continue
@@ -165,10 +164,10 @@ if REDOWNLOAD_LINKS:
                         urllib.request.urlretrieve(src, filename)
                         print(f"{index} Downloaded {filename}")
                         print(f"CND {cnd} MISSING {missing}")
-                        writer.writerow([text, src, subIndex, filename])
+                        writer.writerow([id, text, src, subIndex, filename])
                         
                     except Exception as e:
                         print(f"{index} FAILED TO DOWNLOAD {filename}: {e}")
-                        writer.writerow([text, src, subIndex, "COULD NOT DOWNLOAD"])
+                        writer.writerow([id, text, src, subIndex, "COULD NOT DOWNLOAD"])
                 else:
-                    writer.writerow([text, src, subIndex, local_path])
+                    writer.writerow([id, text, src, subIndex, local_path])
