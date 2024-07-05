@@ -17,9 +17,9 @@
 
 SCRAPE_LINKS = False
 DOWNLOAD_LINKS = False 
-REDOWNLOAD_LINKS = False 
-
-
+REDOWNLOAD_LINKS = True 
+VALIDATE_DOWNLOADS = False
+RENAME_DOWNLOADS = False
 # from distutils.dir_util import copy_tree
 # source_dir = "/kaggle/input/spreadthesign-ukrainian-sign-language-videos"
 # destination_dir = "/kaggle/working/"
@@ -93,9 +93,9 @@ languages = {
 language = 'uk_ua'
 language_path = languages[language]
 if SCRAPE_LINKS:
-    with open('relinks.csv', 'w', newline='', encoding='utf-8') as file:
+    with open('links.csv', 'w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        for i in range(1,75000): # min 1, max 75000
+        for i in range(34941,34942): # min 1, max 75000
             print(f"{i} ")
             scrape_website('https://www.spreadthesign.com',f'{language_path}word/', str(i), writer, True, 0, str(i))
         
@@ -123,7 +123,7 @@ if DOWNLOAD_LINKS:
                 if src!= "UNAVAILABLE" and text!= "UNAVAILABLE":
                     time.sleep(0.33)
                     unsafe_chars = r'[*\\?/\"<>|@`:\';$%^&~`\[\]]'
-                    filename = f"videos/{index}__{re.sub(unsafe_chars, '_', text)}.mp4"
+                    filename = f"videos/{id}__{re.sub(unsafe_chars, '_', text)}.mp4"
                     try:
                         urllib.request.urlretrieve(src, filename)
                         print(f"{index} Downloaded {filename}")
@@ -159,7 +159,7 @@ if REDOWNLOAD_LINKS:
                 if cnd or missing:
                     time.sleep(0.4)
                     unsafe_chars = r'[*\\?/\"<>|@`:\';$%^&~`\[\]]'
-                    filename = f"videos/redo{index}__{re.sub(unsafe_chars, '_', text)}.mp4"
+                    filename = f"videos/redo{id}__{re.sub(unsafe_chars, '_', text)}.mp4"
                     try:
                         urllib.request.urlretrieve(src, filename)
                         print(f"{index} Downloaded {filename}")
@@ -171,3 +171,60 @@ if REDOWNLOAD_LINKS:
                         writer.writerow([id, text, src, subIndex, "COULD NOT DOWNLOAD"])
                 else:
                     writer.writerow([id, text, src, subIndex, local_path])
+if VALIDATE_DOWNLOADS:
+    if not os.path.exists('videos'):
+        os.makedirs('videos')
+    with open('links.csv', 'r', newline='', encoding='utf-8') as file:
+        reader = csv.reader(file)
+        with open('downloads.csv', 'r', newline='', encoding='utf-8') as download_file:
+            download_reader = csv.reader(download_file)
+            with open('valid_downloads.csv', 'w', newline='', encoding='utf-8') as valid_download_file:
+                writer = csv.writer(valid_download_file)
+                # writer.writerow(['index', 'word', 'src_link', 'subindex', 'local_path'])
+                index = 0
+                for row in download_reader: 
+                    download_id, download_text, download_src, download_subindex, download_local_path = row
+                    while True:
+                        current = reader.__next__()
+                        current_id = current[0]
+                        current_text = current[1]
+                        current_src = current[2]
+                        current_subindex = current[3]
+                        if (current_id != download_id):
+                            if (current_src != "UNAVAILABLE"):
+                                time.sleep(0.33)
+                                unsafe_chars = r'[*\\?/\"<>|@`:\';$%^&~`\[\]]'
+                                filename = f"videos/_{current_id}__{re.sub(unsafe_chars, '_', current_text)}.mp4"
+                                try:
+                                    urllib.request.urlretrieve(current_src, filename)
+                                    print(f"{current_id} Downloaded {filename}")
+                                    
+                                    writer.writerow([current_id, current_text, current_src, current_subindex, filename])
+                                    
+                                except Exception as e:
+                                    print(f"{current_id} FAILED TO DOWNLOAD {filename}: {e}")
+                                    writer.writerow([current_id, current_text, current_src, current_subindex, "COULD NOT DOWNLOAD"])
+                        else: 
+                            writer.writerow([download_id, download_text, download_src, download_subindex, download_local_path])
+                            break
+if RENAME_DOWNLOADS:
+    with open("downloads.csv", mode='r', newline='', encoding='utf-8') as infile, \
+            open("clean_downloads.csv", mode='w', newline='', encoding='utf-8') as outfile:
+            unsafe_chars = r'[*\\?/\"<>|@`:\';$%^&~`\[\]]'
+            input_reader = csv.reader(infile)
+            output_writer = csv.writer(outfile)
+            
+            for row in input_reader:
+                id_, word, src_link, subindex, local_path = row
+                old_file_path = local_path
+                if os.path.exists(local_path):
+                    new_file_name = f"v__{id_}_{subindex}_{re.sub(unsafe_chars, '_', word)}.mp4"
+                    new_file_path = f"videos/{new_file_name}"
+                    os.rename(old_file_path, new_file_path)
+                    
+                    row[-1] = str(new_file_path) 
+                else: 
+                    print(f"{id_} {local_path} DOES NOT EXIST")
+
+                output_writer.writerow(row)
+                
