@@ -17,9 +17,9 @@
 
 SCRAPE_LINKS = False
 DOWNLOAD_LINKS = False 
-REDOWNLOAD_LINKS = True 
+REDOWNLOAD_LINKS = False 
 VALIDATE_DOWNLOADS = False
-RENAME_DOWNLOADS = False
+RENAME_DOWNLOADS = True
 # from distutils.dir_util import copy_tree
 # source_dir = "/kaggle/input/spreadthesign-ukrainian-sign-language-videos"
 # destination_dir = "/kaggle/working/"
@@ -218,7 +218,7 @@ if RENAME_DOWNLOADS:
                 id_, word, src_link, subindex, local_path = row
                 old_file_path = local_path
                 if os.path.exists(local_path):
-                    new_file_name = f"v__{id_}_{subindex}_{re.sub(unsafe_chars, '_', word)}.mp4"
+                    new_file_name = f"{id_}_{subindex}_{re.sub(unsafe_chars, '_', word)}.mp4"
                     new_file_path = f"videos/{new_file_name}"
                     os.rename(old_file_path, new_file_path)
                     
