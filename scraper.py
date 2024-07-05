@@ -36,7 +36,7 @@ from bs4 import BeautifulSoup
 import time
 HEADERS = {'User-Agent': 'Mozilla/5.0 (iPad; CPU OS 12_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'}
 
-def scrape_website(urlBase, urlExt, currentIndex, writer, recursive, subIndex, csvIndex): 
+def scrape_website(urlBase, urlExt, currentIndex, writer, recursive, subindex, csvIndex): 
     time.sleep(0.1)
     while(True):
         try:
@@ -76,7 +76,7 @@ def scrape_website(urlBase, urlExt, currentIndex, writer, recursive, subIndex, c
 
     text = soup.find('h2').text.strip() if soup.find('h2') else "UNAVAILABLE"
 
-    writer.writerow([csvIndex,text,src,subIndex])
+    writer.writerow([csvIndex,text,src,subindex])
 
 languages = {
             'ar_sy':'/ar.sy/', 'bg_bg':'/bg.bg/', 'zh_hans_cn':'/zh.hans.cn/', 'hr_hr':'/hr.hr/', 
@@ -95,7 +95,7 @@ language_path = languages[language]
 if SCRAPE_LINKS:
     with open('links.csv', 'w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        for i in range(34941,34942): # min 1, max 75000
+        for i in range(0,75000): # min 1, max 75000
             print(f"{i} ")
             scrape_website('https://www.spreadthesign.com',f'{language_path}word/', str(i), writer, True, 0, str(i))
         
@@ -116,27 +116,24 @@ if DOWNLOAD_LINKS:
             index = 0
             for row in reader: 
                 index += 1 
-                id, text, src, subIndex = row
-                if index <= skip:
-                    print(f"skipping {index}")
-                    continue
+                id, text, src, subindex = row
                 if src!= "UNAVAILABLE" and text!= "UNAVAILABLE":
                     time.sleep(0.33)
                     unsafe_chars = r'[*\\?/\"<>|@`:\';$%^&~`\[\]]'
-                    filename = f"videos/{id}__{re.sub(unsafe_chars, '_', text)}.mp4"
+                    filename = f"videos/{id}_{subindex}_{re.sub(unsafe_chars, '_', text)}.mp4"
                     try:
                         urllib.request.urlretrieve(src, filename)
                         print(f"{index} Downloaded {filename}")
                         
-                        writer.writerow([id, text, src, subIndex, filename])
+                        writer.writerow([id, text, src, subindex, filename])
                         
                     except Exception as e:
                         print(f"{index} FAILED TO DOWNLOAD {filename}: {e}")
-                        writer.writerow([id, text, src, subIndex, "COULD NOT DOWNLOAD"])
+                        writer.writerow([id, text, src, subindex, "COULD NOT DOWNLOAD"])
                 else:
                     if src != "UNAVAILABLE":
                         print(f"{index} ANOMALY")
-                        writer.writerow([id, text, src, subIndex, "ANOMALY"])
+                        writer.writerow([id, text, src, subindex, "ANOMALY"])
                     else: 
                         print(f"{index} SKIPPING")
 if REDOWNLOAD_LINKS:
@@ -150,27 +147,24 @@ if REDOWNLOAD_LINKS:
             index = 0
             for row in reader: 
                 index += 1 
-                id, text, src, subIndex, local_path = row
-                if index <= skip:
-                    print(f"skipping {index}")
-                    continue
+                id, text, src, subindex, local_path = row
                 cnd = local_path == "COULD NOT DOWNLOAD"
                 missing = not os.path.exists(local_path) 
                 if cnd or missing:
                     time.sleep(0.4)
                     unsafe_chars = r'[*\\?/\"<>|@`:\';$%^&~`\[\]]'
-                    filename = f"videos/redo{id}__{re.sub(unsafe_chars, '_', text)}.mp4"
+                    filename = f"videos/{id}_{subindex}_{re.sub(unsafe_chars, '_', text)}.mp4"
                     try:
                         urllib.request.urlretrieve(src, filename)
                         print(f"{index} Downloaded {filename}")
                         print(f"CND {cnd} MISSING {missing}")
-                        writer.writerow([id, text, src, subIndex, filename])
+                        writer.writerow([id, text, src, subindex, filename])
                         
                     except Exception as e:
                         print(f"{index} FAILED TO DOWNLOAD {filename}: {e}")
-                        writer.writerow([id, text, src, subIndex, "COULD NOT DOWNLOAD"])
+                        writer.writerow([id, text, src, subindex, "COULD NOT DOWNLOAD"])
                 else:
-                    writer.writerow([id, text, src, subIndex, local_path])
+                    writer.writerow([id, text, src, subindex, local_path])
 if VALIDATE_DOWNLOADS:
     if not os.path.exists('videos'):
         os.makedirs('videos')
@@ -194,7 +188,7 @@ if VALIDATE_DOWNLOADS:
                             if (current_src != "UNAVAILABLE"):
                                 time.sleep(0.33)
                                 unsafe_chars = r'[*\\?/\"<>|@`:\';$%^&~`\[\]]'
-                                filename = f"videos/_{current_id}__{re.sub(unsafe_chars, '_', current_text)}.mp4"
+                                filename = f"videos/{current_id}_{current_subindex}_{re.sub(unsafe_chars, '_', current_text)}.mp4"
                                 try:
                                     urllib.request.urlretrieve(current_src, filename)
                                     print(f"{current_id} Downloaded {filename}")
